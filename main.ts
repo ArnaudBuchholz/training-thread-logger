@@ -9,7 +9,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 console.log('[Main] Starting logging system...');
 
 const loggerPath = path.join(__dirname, 'logger.ts');
-const loggerWorker = new Worker(loggerPath);
+const loggerWorker = new Worker(loggerPath, {
+  execArgv: ['--experimental-strip-types'],
+});
 loggerWorker.on('exit', (code) => {
   console.log(`[Main] Logger worker exited with code ${code}`);
 });
@@ -23,7 +25,8 @@ const appWorkers: Worker[] = [];
 for (let i = 0; i < NUM_APP_WORKERS; i++) {
   const workerId = `App-${i + 1}`;
   const appWorker = new Worker(appPath, {
-    workerData: { id: workerId }
+    workerData: { id: workerId },
+    execArgv: ['--experimental-strip-types'],
   });
 
   appWorker.on('exit', (code) => {
