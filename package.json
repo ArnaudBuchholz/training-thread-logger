@@ -1,0 +1,24 @@
+{
+  "name": "training-thread-logger",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArnaudBuchholz/training-thread-logger.git"
+  },
+  "keywords": [],
+  "author": "Arnaud Buchholz <arnaud.buchholz@free.fr>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ArnaudBuchholz/training-thread-logger/issues"
+  },
+  "homepage": "https://github.com/ArnaudBuchholz/training-thread-logger#readme",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^24.8.1",
+    "tsx": "^4.20.6"
+  }
+}
