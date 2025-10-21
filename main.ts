@@ -68,5 +68,6 @@ const gracefulShutdown = async () => {
   process.exit(0);
 };
 
+// Only the main thread can handle SIGINT and SIGTERM
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);

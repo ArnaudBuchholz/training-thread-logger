@@ -13,5 +13,6 @@ workersChannel.onmessage = (event: any) => {
   if (event.data.terminate) {
     console.log(`[App Worker ${workerId}] terminating...`);
     clearInterval(intervalId);
+    workersChannel.close();
   }
 }
