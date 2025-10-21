@@ -2,8 +2,9 @@
   "name": "training-thread-logger",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node --experimental-strip-types --disable-warning=ExperimentalWarning main.ts"
   },
   "repository": {
     "type": "git",
@@ -18,7 +19,6 @@
   "homepage": "https://github.com/ArnaudBuchholz/training-thread-logger#readme",
   "description": "",
   "devDependencies": {
-    "@types/node": "^24.8.1",
-    "tsx": "^4.20.6"
+    "@types/node": "^24.8.1"
   }
 }
