@@ -1,17 +1,18 @@
 import { BroadcastChannel, workerData } from 'worker_threads';
+import { logger } from '../logger.ts';
 
 const workerId = workerData.id;
-console.log(`[App Worker ${workerId}] Started.`);
+logger.info({ message: `[App Worker ${workerId}] started` });
 
 const intervalId = setInterval(() => {
-  console.log(`[App Worker ${workerId}] is alive`);
+  logger.info({ message: `[App Worker ${workerId}] is alive` });
 }, 1000);
 
 const workersChannel = new BroadcastChannel('workers');
 workersChannel.onmessage = (event: any) => {
-  console.log(`[App Worker ${workerId}] received ${JSON.stringify(event.data)}`);
+  logger.warn({ message: `[App Worker ${workerId}] received ${JSON.stringify(event.data)}` });
   if (event.data.terminate) {
-    console.log(`[App Worker ${workerId}] terminating...`);
+    logger.warn({ message: `[App Worker ${workerId}] terminating...` });
     clearInterval(intervalId);
     workersChannel.close();
   }

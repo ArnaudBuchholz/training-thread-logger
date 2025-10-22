@@ -1,30 +1,52 @@
-import { BroadcastChannel } from 'worker_threads';
-// import path from 'node:path';
-// import { fileURLToPath } from 'node:url';
-// import fs from 'fs';
-// import zlib from 'zlib';
+import { BroadcastChannel, threadId, isMainThread } from 'node:worker_threads';
+import { start } from './threads.ts';
 
-console.log(`[Logger Worker] Started.`);
+export type LogAttributes = {
+  message: string;
+  error?: unknown;
+};
 
-const intervalId = setInterval(() => {
-  console.log(`[Logger Worker] is alive`);
-}, 1000);
+type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
-// const LOG_FILE_NAME = `app.log.gz`;
-// const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// const logFilePath = path.join(__dirname, LOG_FILE_NAME);
-// const fileStream = fs.createWriteStream(logFilePath);
-// const gzipStream = zlib.createGzip();
-// gzipStream.pipe(fileStream);
-// console.log(`[Logger Worker] Writing logs to ${logFilePath}`);
-// const loggingChannel = new BroadcastChannel('logging');
+export type InternalLogAttributes = {
+  /** Time stamp (UNIX epoch) */
+  timestamp: number;
+  /** level */
+  level: LogLevel;
+  /** process id */
+  processId: number;
+  /** thread id */
+  threadId: number;
+  /** indicates if this is the main thread */
+  isMainThread: boolean;
+};
 
-const workersChannel = new BroadcastChannel('workers');
-workersChannel.onmessage = (event: any) => {
-  console.log(`[Logger Worker] received ${JSON.stringify(event.data)}`);
-  if (event.data.terminate) {
-    console.log(`[Logger Worker] terminating...`);
-    clearInterval(intervalId);
-    workersChannel.close();
-  }
+const channel = new BroadcastChannel('logger');
+const worker = start('logger');
+
+const log = (level: LogLevel, attributes: LogAttributes) => {
+  channel.postMessage({
+    timestamp: Date.now(),
+    level,
+    processId: process.pid,
+    threadId,
+    isMainThread,
+    ...attributes
+  } satisfies InternalLogAttributes & LogAttributes)
 }
+
+export const logger = {
+  debug(attributes: LogAttributes) { log('debug', attributes); },
+  info(attributes: LogAttributes) { log('info', attributes); },
+  warn(attributes: LogAttributes) { log('warn', attributes); },
+  error(attributes: LogAttributes) { log('error', attributes); },
+  fatal(attributes: LogAttributes) { log('fatal', attributes); }
+};
+
+export const shutdown = async () => {
+  const { promise, resolve } = Promise.withResolvers();
+  worker.on('exit', resolve);
+  channel.postMessage({ terminate: true });
+  await promise;
+  channel.close();
+};
