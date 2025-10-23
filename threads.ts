@@ -1,15 +1,10 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BroadcastChannel, Worker } from 'node:worker_threads';
+import { Worker } from 'node:worker_threads';
 
 const WORKER_FLAGS = ['--experimental-strip-types', '--disable-warning=ExperimentalWarning']
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const workers: Worker[] = [];
-
-/** Returns the count of active threads running */
-export const getNumberOfActiveThreads = () => workers.length;
 
 export const start = (name: string, data?: unknown) => {
   // TODO: switch extension & execArgv based on current file extension
@@ -18,6 +13,5 @@ export const start = (name: string, data?: unknown) => {
     workerData: data,
     execArgv: WORKER_FLAGS,
   });
-  workers.push(worker);
   return worker;
 }

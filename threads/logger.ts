@@ -1,4 +1,4 @@
-import { BroadcastChannel } from 'worker_threads';
+import { BroadcastChannel, threadId, isMainThread } from 'worker_threads';
 import type { InternalLogAttributes, LogAttributes } from '../logger.ts';
 
 // import path from 'node:path';
@@ -15,21 +15,40 @@ import type { InternalLogAttributes, LogAttributes } from '../logger.ts';
 // console.log(`[Logger Worker] Writing logs to ${logFilePath}`);
 // const loggingChannel = new BroadcastChannel('logging');
 
+let uid = 0
+
+const log = (attributes: InternalLogAttributes & LogAttributes) => {
+  const { level, timestamp, processId = 0, threadId = 0, message }  = attributes;
+  const icon = {
+    debug: '🐞',
+    info: '🛈',
+    warn: '⚠️',
+    error: '❌',
+    fatal: '💣'
+  }[level];
+  console.log(++uid, icon, timestamp, processId, threadId, message);
+}
+
+const _log = (attributes: LogAttributes) => log({
+  timestamp: Date.now(),
+  level: 'info',
+  processId: process.pid,
+  threadId,
+  isMainThread,
+  ...attributes
+});
+
 const channel = new BroadcastChannel('logger');
 channel.onmessage = (event: any) => {
   if (event.data.terminate) {
-    console.log(`[Logger Worker] terminating...`);
+    _log({ message: 'Logger terminating' });
     channel.close();
+  } else if (event.data.isReady) {
+    channel.postMessage({ ready: true });
   } else {
-    const attributes = event.data as InternalLogAttributes & LogAttributes;
-    const { level = 'info', processId = 0, threadId = 0, message }  = attributes;
-    const icon = {
-      debug: '🐞',
-      info: '🛈',
-      warn: '⚠️',
-      error: '❌',
-      fatal: '💣'
-    }[level];
-    console.log(icon, processId, threadId, message);
+    log(event.data as InternalLogAttributes & LogAttributes);
   }
 }
+
+_log({ message: 'Logger ready' });
+channel.postMessage({ ready: true });

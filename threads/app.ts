@@ -1,19 +1,29 @@
 import { BroadcastChannel, workerData } from 'worker_threads';
-import { logger } from '../logger.ts';
+import { logger, LogLevel } from '../logger.ts';
+
+const LOG_LEVELS = Object.values(LogLevel);
 
 const workerId = workerData.id;
 logger.info({ message: `[App Worker ${workerId}] started` });
 
-const intervalId = setInterval(() => {
-  logger.info({ message: `[App Worker ${workerId}] is alive` });
-}, 1000);
+let timeoutId: ReturnType<typeof setInterval>;
+function scheduleNextLog() {
+    const interval = Math.random() * 2000 + 100; // Random interval between 100ms and 2.1s
+    timeoutId = setTimeout(() => {
+      const level = LOG_LEVELS[Math.floor(Math.random() * LOG_LEVELS.length)];
+      logger[level]({ message: `This is a sample ${level} message from worker ${workerId}. Random number: ${Math.random()}` });
+      scheduleNextLog();
+    }, interval);
+}
+scheduleNextLog();
 
-const workersChannel = new BroadcastChannel('workers');
-workersChannel.onmessage = (event: any) => {
-  logger.warn({ message: `[App Worker ${workerId}] received ${JSON.stringify(event.data)}` });
+const workersChannel = new BroadcastChannel('apps');
+workersChannel.onmessage = async (event: any) => {
+  logger.info({ message: `[App Worker ${workerId}] received ${JSON.stringify(event.data)}` });
   if (event.data.terminate) {
     logger.warn({ message: `[App Worker ${workerId}] terminating...` });
-    clearInterval(intervalId);
+    clearInterval(timeoutId);
     workersChannel.close();
+    await logger.close();
   }
 }
