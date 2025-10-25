@@ -3,8 +3,10 @@ import type { Worker } from 'node:worker_threads';
 import { start } from './threads.ts';
 
 export type LogAttributes = {
+  source: string;
   message: string;
   error?: unknown;
+  data?: object;
 };
 
 export const LogLevel = {
@@ -37,6 +39,11 @@ if (isMainThread) {
 }
 const buffer: (InternalLogAttributes & LogAttributes)[] = [];
 let ready = false;
+
+const metricsMonitorInterval = setInterval(() => {
+  logger.debug({ source: 'metric', message: 'threadCpuUsage', data: process.threadCpuUsage() });
+  logger.debug({ source: 'metric', message: 'memoryUsage', data: process.memoryUsage() });
+}, 1000)
 
 channel.onmessage = (event: any) => {
   if (event.data.ready) {
@@ -78,6 +85,7 @@ export const logger = {
   fatal(attributes: LogAttributes) { log('fatal', attributes); },
 
   async close() {
+    clearInterval(metricsMonitorInterval);
     if (worker) {
       const { promise, resolve } = Promise.withResolvers();
       worker.on('exit', resolve);
